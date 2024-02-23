@@ -70,6 +70,20 @@ export const findByEmail = async (user_email: string): Promise<null | UnitUser> 
     return getUser;
 }
 
+export const findByUserName = async (username: string): Promise<null | UnitUser> => {
+
+    const allUsers = await findAll();
+
+    const getUser = allUsers.find(result => username === result.username);
+
+    if(!getUser){
+        return null;
+    }
+
+    return getUser;
+}
+
+
 export const compassPassword = async(email : string, supplied_password : string): Promise<null | UnitUser> => {
 
     const user = await findByEmail(email)

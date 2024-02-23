@@ -125,3 +125,57 @@ userRouter.delete('/user/:id', async (req: Request, res: Response) => {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({error})
     }
 })
+
+userRouter.get("/users/search", async (req: Request<{}, {}, {}, { name?: string; email?: string }>, res: Response) => {
+    try {
+        const { name, email } = req.query;
+
+        if (!name && !email) {
+            const allUsers: UnitUser[] = await database.findAll();
+            if (!allUsers || allUsers.length === 0) {
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: `No users at this time..` });
+            }
+            return res.status(StatusCodes.OK).json({ total_user: allUsers.length, allUsers });
+        }
+        
+        if (name && email) {
+            // Filter users by both name and email containing "eth"
+            const allUsers: UnitUser[] = await database.findAll();
+            const usersWithSimilarNameAndEmail = allUsers.filter(user => {
+                const userName = user.username.toLowerCase();
+                const userEmail = user.email.toLowerCase();
+                const searchName = name.toLowerCase();
+                const searchEmail = email.toLowerCase();
+                // Check if both name and email contain the same letters as "eth"
+                return userName.includes(searchName) && userEmail.includes(searchEmail);
+            });
+
+            if (!usersWithSimilarNameAndEmail || usersWithSimilarNameAndEmail.length === 0) {
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: `No users found with name and email containing the same letters` });
+            }
+            return res.status(StatusCodes.OK).json({ users: usersWithSimilarNameAndEmail });
+        } else if (name) {
+            const user = await database.findByUserName(name);
+            if (!user) {
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: `No users found with the specified name` });
+            }
+            return res.status(StatusCodes.OK).json({ user });
+        } else if (email) {
+            // Filter users by email containing the same letters
+            const allUsers: UnitUser[] = await database.findAll();
+            const usersWithEmailContainingSameLetters = allUsers.filter(user => {
+                const userEmail = user.email.toLowerCase(); // Convert email to lowercase for case-insensitive matching
+                const searchEmail = email.toLowerCase();
+                // Check if each letter in the search email is included in the user's email
+                return [...searchEmail].every(letter => userEmail.includes(letter));
+            });
+
+            if (!usersWithEmailContainingSameLetters || usersWithEmailContainingSameLetters.length === 0) {
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: `No users found with email containing the same letters` });
+            }
+            return res.status(StatusCodes.OK).json({ users: usersWithEmailContainingSameLetters });
+        } 
+    } catch (error) {
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error });
+    }
+});
