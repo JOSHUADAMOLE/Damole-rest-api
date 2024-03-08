@@ -1,10 +1,10 @@
-import  express from "express"
+import express from "express"
 import * as dotevnv from "dotenv"
 import cors from "cors"
 import helmet from "helmet"
 import { userRouter } from "./users/users.routes"
 import { productRouter } from "./products/products.routes"
-
+import mysql from "mysql"
 
 dotevnv.config()
 
